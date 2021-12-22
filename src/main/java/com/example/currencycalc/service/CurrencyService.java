@@ -17,57 +17,51 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
 @Service("currencyService")
 @RequiredArgsConstructor
 public class CurrencyService {
-    public String enquiry(CurrencyRequestDto currencyRequestDto) {
+    public CurrencyResponseDto getCurrency(CurrencyRequestDto currencyRequestDto) throws Exception {
 
-        String country = currencyRequestDto.getCountry();
+        // 결과값 초기화
+        String result = "";
+
+        // request에서 금액과 국가를 꺼내 변수에 담는다
         BigDecimal amount = currencyRequestDto.getAmount();
-        HashMap<String, Object> result = new HashMap<String, Object>();
-        String jsonResult = "";
+        String country = currencyRequestDto.getCountry().toUpperCase();
 
-        try {
-            HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
-            factory.setConnectTimeout(5000); //타임아웃 설정 5초
-            factory.setReadTimeout(5000);//타임아웃 설정 5초
-
-            RestTemplate restTemplate = new RestTemplate(factory);
-            HttpHeaders header = new HttpHeaders();
-            HttpEntity<?> entity = new HttpEntity<>(header);
-
-            String url = "http://api.currencylayer.com/live";
-            UriComponents uri = UriComponentsBuilder.fromHttpUrl(url+"?"+"access_key=bd5d5e0e77c92725758edd4be856c2d4").build();
-
-            //이 한줄의 코드로 API를 호출해 MAP타입으로 전달 받는다.
-            ResponseEntity<Map> resultMap = restTemplate.exchange(uri.toString(), HttpMethod.GET, entity, Map.class);
-            result.put("statusCode", resultMap.getStatusCodeValue()); //http status code를 확인
-            result.put("header", resultMap.getHeaders()); //헤더 정보 확인
-            result.put("body", resultMap.getBody()); //실제 데이터 정보 확인
-
-
-
-            //데이터를 제대로 전달 받았는지 확인 string형태로 파싱해줌
-            ObjectMapper mapper = new ObjectMapper();
-            jsonResult = mapper.writeValueAsString(resultMap.getBody());
-
-        } catch (HttpClientErrorException | HttpServerErrorException e) {
-            result.put("statusCode", e.getRawStatusCode());
-            result.put("body"  , e.getStatusText());
-            System.out.println("dfdfdfdf");
-            System.out.println(e.toString());
-
-        } catch (Exception e) {
-            result.put("statusCode", "999");
-            result.put("body"  , "excpetion오류");
-            System.out.println(e.toString());
+        BigDecimal zero = BigDecimal.valueOf(0);
+        BigDecimal tenThousand = BigDecimal.valueOf(10000);
+        if(zero.compareTo(amount) == 1 || amount.compareTo(tenThousand) == 1){
+            throw new Exception("금액은 0부터 10000까지 입력가능합니다");
         }
 
-        //return jsonResult;
-        return "";
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+        factory.setConnectTimeout(5000);
+        factory.setReadTimeout(5000);
+
+        RestTemplate restTemplate = new RestTemplate(factory);
+        HttpHeaders header = new HttpHeaders();
+        HttpEntity<?> entity = new HttpEntity<>(header);
+
+        String url = "http://api.currencylayer.com/live";
+        UriComponents uri = UriComponentsBuilder.fromHttpUrl(url+"?"+"access_key=").build();
+        ResponseEntity<Map> resultMap = restTemplate.exchange(uri.toString(), HttpMethod.GET, entity, Map.class);
+        HashMap<String, Object> currencyMap = (HashMap<String, Object>) resultMap.getBody().get("quotes");
+
+        // double형은 정확한 계산에 불리하기 때문에 BigDecimal로 형변환후 금액을 곱한다
+        double currencyDouble = (double) currencyMap.get("USD"+country);
+        BigDecimal currency = new BigDecimal(currencyDouble);
+        BigDecimal decimalResult = currency.multiply(amount);
+
+        // 금액을 형식에 맞게 포매팅한다
+        DecimalFormat df = new DecimalFormat("#,###.00");
+        result = df.format(decimalResult).toString();
+
+        return new CurrencyResponseDto(country, amount, result);
 
     }
 }
