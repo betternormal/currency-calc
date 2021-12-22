@@ -7,6 +7,7 @@ import com.example.currencycalc.common.StatusCode;
 import com.example.currencycalc.service.CurrencyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,17 +18,28 @@ import org.springframework.web.bind.annotation.RestController;
 public class MainController {
     private final CurrencyService currencyService;
 
-    @PostMapping("/currency")
-    public ResponseEntity getCurrency (CurrencyRequestDto currencyRequestDto) throws Exception {
+    @GetMapping ("/currency")
+    public ResponseEntity getCurrency () throws Exception {
 
         return ResponseEntity.ok(
                 DefaultRes.builder()
-                        .data(currencyService.getCurrency(currencyRequestDto))
+                        .data(currencyService.getCurrency())
                         .statusCode(StatusCode.OK)
                         .responseMessage(ResponseMessage.GET_SUCCESS)
                         .build()
         );
+    }
 
+    @PostMapping("/currency")
+    public ResponseEntity calcCurrency (CurrencyRequestDto currencyRequestDto) throws Exception {
+
+        return ResponseEntity.ok(
+                DefaultRes.builder()
+                        .data(currencyService.calcCurrency(currencyRequestDto))
+                        .statusCode(StatusCode.OK)
+                        .responseMessage(ResponseMessage.GET_SUCCESS)
+                        .build()
+        );
     }
 }
 
