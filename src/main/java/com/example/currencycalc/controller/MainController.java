@@ -1,6 +1,7 @@
 package com.example.currencycalc.controller;
 
 import com.example.currencycalc.dto.CurrencyRequestDto;
+import com.example.currencycalc.dto.CurrencyResponseDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpEntity;
@@ -19,6 +20,8 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,11 +29,11 @@ import java.util.Map;
 @RequestMapping("/api")
 public class MainController {
     @PostMapping("/currency")
-    public String getCurrency (CurrencyRequestDto currencyRequestDto) {
-
-        String amount = currencyRequestDto.getAmount();
-        String country = currencyRequestDto.getCountry();
-
+    public CurrencyResponseDto getCurrency (CurrencyRequestDto currencyRequestDto) {
+        
+        BigDecimal amount = currencyRequestDto.getAmount();
+        String country = currencyRequestDto.getCountry().toUpperCase();
+        BigDecimal resultt = null;
         HashMap<String, Object> result = new HashMap<String, Object>();
         String jsonResult = "";
 
@@ -44,7 +47,7 @@ public class MainController {
             HttpEntity<?> entity = new HttpEntity<>(header);
 
             String url = "http://api.currencylayer.com/live";
-            UriComponents uri = UriComponentsBuilder.fromHttpUrl(url+"?"+"access_key=").build();
+            UriComponents uri = UriComponentsBuilder.fromHttpUrl(url+"?"+"access_key=bd5d5e0e77c92725758edd4be856c2d4").build();
 
             //이 한줄의 코드로 API를 호출해 MAP타입으로 전달 받는다.
             ResponseEntity<Map> resultMap = restTemplate.exchange(uri.toString(), HttpMethod.GET, entity, Map.class);
@@ -53,10 +56,11 @@ public class MainController {
             result.put("body", resultMap.getBody()); //실제 데이터 정보 확인
 
             HashMap<String, Object> result2 = (HashMap<String, Object>) resultMap.getBody().get("quotes");
-            Double currency = (Double) result2.get("USD"+country);
+            double currencyDouble = (double) result2.get("USD"+country);
+            BigDecimal currency = new BigDecimal(currencyDouble);
             //Double currency = resultMap.getBody().get("quotes").get("USD"+country);
 
-
+            resultt = currency.multiply(amount).setScale(2, RoundingMode.HALF_UP);
             //데이터를 제대로 전달 받았는지 확인 string형태로 파싱해줌
             ObjectMapper mapper = new ObjectMapper();
             jsonResult = mapper.writeValueAsString(resultMap.getBody());
@@ -73,7 +77,8 @@ public class MainController {
             System.out.println(e.toString());
         }
 
-        return jsonResult;
+        //return jsonResult;
+        return new CurrencyResponseDto(country, amount, resultt);
 
     }
 
