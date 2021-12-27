@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/calc.css">
+    
+</head>
+<body>
+    <div class="App">
+        <header class="App-header">
+          <div>
+          <h2>환율 계산</h2>
+          <div>
+            <table>
+              <tbody>
+                <tr>
+                  <th>송금국가 : </th>
+                  <td>미국(USD)</td>
+                </tr>
+                <tr>
+                  <th>수취국가 : </th>
+                  <td>
+                    <select name="currency" id="currency-select">
+                      <option value="">--선택--</option>
+                      <option value="krw">한국(KRW)</option>
+                      <option value="jpy">일본</option>
+                      <option value="php">필리핀</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <th>환율 : </th>
+                  <td id="aa"></td>
+                </tr>
+                <tr>
+                  <th>송금액 : </th>
+                  <td>
+                    <input class="right" type="number" id="amount"/>
+                    <span>USD</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <br/>
+          </div>
+          <p id="result_message"></p>
+          <button id="submit">Submit</button>
+  
+          </div>
+        </header>
+      </div>
+      <script>
+        let krw;
+        let jpy;
+        let php;
+
+        window.addEventListener('DOMContentLoaded', function(){
+            axios(
+                {
+                    url: '/api' + '/currency',
+                    method: 'get',
+                }
+            ).then(function (response) {
+                let result = response.data.data;
+                console.log('response', response.data);
+                krw = result.krw;
+                jpy = result.jpy;
+                php = result.php;
+            });
+        });
+
+        
+        const currencySelect = document.getElementById('currency-select');
+        currencySelect.addEventListener('change', (e)=> {
+            let value = e.target.value;
+            if(value === 'krw') {
+                aa.textContent =  krw+' '+value.toUpperCase()+'/USD';
+            }
+            else if(value === 'jpy') {
+                aa.textContent =  jpy+' '+value.toUpperCase()+'/USD';
+            }
+            else if(value === 'php') {
+                aa.textContent =  php+' '+value.toUpperCase()+'/USD';
+            }
+            else if(value === '') {
+                aa.textContent =  '';
+            }
+        })
+
+        const $submit= document.getElementById('submit');
+        $submit.addEventListener('click', (e)=> {
+            if(document.getElementById('currency-select').value === '') {
+                alert('수취국가를 선택해주세요');
+                return;
+            }
+            if(document.getElementById('amount').value === '') {
+                alert('송금액을 입력해주세요');
+                return;
+            }
+
+            const params = new URLSearchParams()
+            params.append('country', document.getElementById('currency-select').value);
+            params.append('amount', document.getElementById('amount').value);
+            axios(
+                {
+                    url: '/api' + '/currency',
+                    method: 'post',
+                    data: params,
+                }
+            ).then(function (response) {
+                
+                let result = response.data;
+                if(result.statusCode === 200) {
+                    document.getElementById('result_message').textContent = `수취금액은 ${result.data.result} ${result.data.country} 입니다`;
+                }
+                else if(result.statusCode === 400) {
+                    alert(result.data);
+                }
+ 
+            });
+        })
+    </script>
+</body>
+</html>

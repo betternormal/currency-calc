@@ -37,7 +37,7 @@ public class CurrencyService {
         HttpEntity<?> entity = new HttpEntity<>(header);
 
         String url = "http://api.currencylayer.com/live";
-        UriComponents uri = UriComponentsBuilder.fromHttpUrl(url+"?"+"access_key=").build();
+        UriComponents uri = UriComponentsBuilder.fromHttpUrl(url+"?"+"access_key=ff64d5e390811d985869531ab31c2244").build();
         ResponseEntity<Map> resultMap = restTemplate.exchange(uri.toString(), HttpMethod.GET, entity, Map.class);
         HashMap<String, Object> currencyMap = (HashMap<String, Object>) resultMap.getBody().get("quotes");
 
@@ -78,7 +78,7 @@ public class CurrencyService {
         HttpEntity<?> entity = new HttpEntity<>(header);
 
         String url = "http://api.currencylayer.com/live";
-        UriComponents uri = UriComponentsBuilder.fromHttpUrl(url+"?"+"access_key=").build();
+        UriComponents uri = UriComponentsBuilder.fromHttpUrl(url+"?"+"access_key=ff64d5e390811d985869531ab31c2244").build();
         ResponseEntity<Map> resultMap = restTemplate.exchange(uri.toString(), HttpMethod.GET, entity, Map.class);
         HashMap<String, Object> currencyMap = (HashMap<String, Object>) resultMap.getBody().get("quotes");
 
